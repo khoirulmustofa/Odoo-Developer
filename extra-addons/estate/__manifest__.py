@@ -25,7 +25,15 @@
     ],
     
     # File data (XML, CSV) yang akan dimuat (akan diisi pada chapter selanjutnya)
-    'data': [],
+    'data': [
+        # Kita mendaftarkan file security agar dieksekusi oleh Odoo
+        'security/ir.model.access.csv',
+        'views/estate_property_views.xml',
+        'views/estate_property_type_views.xml',
+        'views/estate_property_tag_views.xml',
+        'views/estate_property_offer_views.xml',
+        'views/estate_menus.xml',
+    ],
     
     # PENTING (Sesuai latihan tutorial):
     # 'application': True membuat modul ini dianggap sebagai Aplikasi utama.

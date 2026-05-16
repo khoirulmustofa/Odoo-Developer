@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deklarasi standar XML wajib untuk file data Odoo -->
+<odoo>
+
+    <!-- ======================================================== -->
+    <!-- ACTION                                                   -->
+    <!-- ======================================================== -->
+   <record id="estate_property_action" model="ir.actions.act_window">
+        <field name="name">Properties</field>
+        <field name="res_model">estate.property</field>
+        <field name="view_mode">list,form</field>
+    </record>` <!--
+    ======================================================== -->
+    <!-- DEFINISI SEARCH VIEW (Bilah Pencarian & Filter di Kanan Atas) -->
+    <!-- ======================================================== -->
+    <record
+        id="estate_property_view_search" model="ir.ui.view">
+        <field name="name">estate.property.search</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <search string="Estate Property">
+                <!-- 1. FIELD PENCARIAN (Bisa diketik di search bar) -->
+                <field name="name" string="Title" />
+                <field name="property_type_id" />
+                <field name="postcode" />
+                <field name="expected_price" />
+                <field name="bedrooms" />
+                <field name="living_area" />
+                <field name="facades" />
+
+                <separator />
+
+                <!-- 2. FILTER BUTTON (Tombol siap pakai di menu dropdown 'Filters') -->
+                <!-- Contoh Valid: Kita filter data yang field 'garden'-nya bernilai True -->
+                <filter string="With Garden" name="filter_with_garden"
+                    domain="[('garden', '=', True)]" />
+
+                <!-- Contoh Valid: Filter rumah yang harganya di atas 100000 -->
+                <filter string="Expensive" name="filter_expensive"
+                    domain="[('expected_price', '>=', 1000)]" />
+
+                <!-- 3. GROUP BY BUTTON (Tombol pengelompokan di menu dropdown 'Group By') -->
+                <group expand="1" string="Group By">
+                    <!-- Contoh Valid: Mengelompokkan daftar rumah berdasarkan Kode Pos -->
+                    <filter string="Postcode" name="group_by_postcode"
+                        context="{'group_by':'postcode'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ======================================================== -->
+    <!-- 1. DEFINISI LIST VIEW (Tampilan Tabel Ringkasan Data)    -->
+    <!-- ======================================================== -->
+    <record
+        id="estate_property_view_list" model="ir.ui.view">
+        <field name="name">estate.property.list</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <!-- Tag <list> untuk merender tabel data pada Odoo 18 -->
+            <list string="Properties">
+                <field name="name" />
+                <field name="property_type_id" />
+                <field name="tag_ids" widget="many2many_tags" />
+                <field name="postcode" />
+                <field name="bedrooms" />
+                <field name="expected_price" />
+                <field name="living_area" />
+                <field name="facades" />
+                <field name="garden" />
+                <field name="garden_area" />
+                <field name="garden_orientation" />
+            </list>
+        </field>
+    </record>
+
+    <!-- ======================================================== -->
+    <!-- 2. DEFINISI FORM VIEW (Tampilan Detail & Input Data)     -->
+    <!-- ======================================================== -->
+    <record
+        id="estate_property_view_form" model="ir.ui.view">
+        <field name="name">estate.property.form</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <form string="Property">
+                <!-- Pembungkus kertas putih utama -->
+                <sheet>
+                    <group>
+                        <!-- Judul Utama Properti (Ukuran Besar H1) -->
+                        <h1>
+                            <field name="name" placeholder="E.g. Cozy Condo in Downtown" />
+                        </h1>
+                        <field name="tag_ids" widget="many2many_tags" />
+                    </group>
+                    <group>
+                        <!-- Pembagian Tata Letak Menjadi 2 Kolom Sejajar -->
+                        <group>
+                            <!-- Kolom Kiri: Informasi Dasar & Lokasi -->
+                            <field name="property_type_id" />
+                            <field name="postcode" />
+                            <field name="date_availability" />
+                        </group>
+                        <group>
+                            <!-- Kolom Kanan: Informasi Finansial -->
+                            <field name="expected_price" />
+                            <field name="best_price" />
+                            <field name="selling_price" />
+                        </group>
+                    </group>
+
+                    <!-- Sistem Navigasi Tab (Notebook) -->
+                    <notebook>
+                        <!-- TAB 1: Deskripsi Properti -->
+                        <page string="Description">
+                           <group>
+                                <field name="description" />
+                            </group>
+                            <group>
+                                <field name="bedrooms" />
+                                <field name="living_area" />
+                                <field name="facades" />
+                                <field name="garage" />
+                                <field name="garden" />
+                                <field name="garden_area" />
+                                <field name="garden_orientation" />
+                                <field name="total_area" readonly="1" />
+                            </group>
+                        </page>
+
+                        <page string="Offers">
+                           <field name="offer_ids">
+                            </field>
+                        </page>
+
+                        <page string="Other Info">
+                            <group>
+                                <field name="salesperson_id" />
+                                <field name="buyer_id" />
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+</odoo>
