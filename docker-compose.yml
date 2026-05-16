@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  odoo:
+    container_name: odoo
+    image: odoo:18.0
+    volumes:
+      - ./etc/odoo:/etc/odoo
+      - ./extra-addons:/mnt/extra-addons
+      - ./var/lib/odoo:/var/lib/odoo
+    ports:
+      - "8069:8069"
+    networks:
+      - dev_network # Join ke external network yang sudah ada
+networks:
+  dev_network:
+    external: true # Gunakan network yang sudah ada
+
