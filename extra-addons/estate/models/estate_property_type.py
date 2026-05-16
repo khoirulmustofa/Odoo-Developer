@@ -9,6 +9,16 @@ class EstatePropertyType(models.Model):
 
     # Kolom nama tipe properti, wajib diisi
     name = fields.Char(string="Name", required=True)
+
+
+    _sql_constraints = [
+        # 2. Tuple berisi 3 elemen: ('nama_constraint_unik', 'SINTAKS_SQL', 'Pesan Error untuk User')
+        (
+            'type_name_unique',             # Nama constraint unik untuk database PostgreSQL
+            'UNIQUE(name)',                  # Instruksi SQL: Kolom 'name' tidak boleh ada yang duplikat
+            'The property type name must be unique!' # Pesan pop-up merah yang muncul di layar user
+        )
+    ]
     
     # RELASI: Menghubungkan tipe properti dengan properti yang dimilikinya.
     # one2many memastikan satu tipe properti bisa dimiliki oleh banyak properti.

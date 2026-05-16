@@ -3,7 +3,9 @@ from dateutil.relativedelta import relativedelta
 
 # 1. Mengimpor pustaka (library) bawaan Odoo
 # tambahkan 'api' untuk menggunakan decorator
-from odoo import models, fields,api
+from odoo import models, fields, api
+from odoo.exceptions import UserError, ValidationError
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 # 2. Mendefinisikan class Python yang mewarisi class models.Model milik Odoo
 class EstateProperty(models.Model):
@@ -61,10 +63,23 @@ class EstateProperty(models.Model):
     )
 
     # Mendefinisikan field baru bernama total_area.
-    # Atribut 'compute' menunjuk ke nama fungsi (berupa string) yang akan melakukan kalkulasi.
+    # 18. Atribut 'compute' menunjuk ke nama fungsi (berupa string) yang akan melakukan kalkulasi.
     total_area = fields.Integer(compute="_compute_total_area", string="Total Area (sqm)")
 
+    # 19. BARU: Membuat field 'best_price' (Tipe desimal/FLOAT) untuk menyimpan nilai hasil kalkulasi
     best_price = fields.Float(compute="_compute_best_price", string="Best Price Offers", copy=False)
+
+    # 20. BARU: Membuat field 'state' (Tipe Pilihan/SELECTION) untuk menyimpan status properti
+    state = fields.Selection(
+        selection=[
+            ('new', 'New'),
+            ('offer_received', 'Offer Received'),
+            ('offer_accepted', 'Offer Accepted'),
+            ('sold', 'Sold'), 
+            ('canceled', 'Canceled')
+        ],
+        required=True, copy=False, default='new', string="Status"
+    )
 
     # === PENAMBAHAN RELASI MANY2ONE ===
     
@@ -92,6 +107,41 @@ class EstateProperty(models.Model):
     offer_ids = fields.One2many("estate.property.offer", "property_id", string="Offers")
 
 
+    # Menambahkan validasi harga tidak boleh minus langsung di PostgreSQL
+    _sql_constraints = [
+        (
+            'check_expected_price',          # Identifier unik
+            'CHECK(expected_price > 0)',     # Instruksi SQL: Harga harapan harus lebih dari 0
+            'A property expected price must be strictly positive.' # Pesan error
+        ),
+        (
+            'check_selling_price',
+            'CHECK(selling_price >= 0)',     # Instruksi SQL: Harga jual boleh 0 (belum terjual), tapi tidak boleh minus
+            'A property selling price must be positive.'
+        )
+    ]
+
+    # Jika 'expected_price' atau 'selling_price' diisi/diubah, fungsi di bawahnya akan jalan.
+    @api.constrains('expected_price', 'selling_price')
+    def _check_selling_price(self):
+        # 4. WAJIB melooping 'self' karena Odoo bekerja secara batch (Recordset)
+        for record in self:
+            # 5. Kita abaikan pengecekan jika harga jual masih 0 (artinya rumah belum laku/belum ada penawaran diterima)
+            # presicion_digits=2 berarti kita membandingkan hingga 2 angka di belakang koma (0.00)
+            if not float_is_zero(record.selling_price, precision_digits=2):
+                
+                # 6. Menghitung ambang batas bawah (90% dari harga harapan)
+                lowest_price = record.expected_price * 0.9
+                
+                # 7. Menggunakan float_compare untuk membandingkan 2 angka desimal secara aman.
+                # Format: float_compare(Angka_A, Angka_B, precision_digits)
+                # Return -1 artinya Angka_A < Angka_B
+                # Return  0 artinya Angka_A == Angka_B
+                # Return  1 artinya Angka_A > Angka_B
+                if float_compare(record.selling_price, lowest_price, precision_digits=2) == -1:
+                    
+                    # 8. Jika harga jual lebih kecil (-1) dari 90%, lemparkan error untuk mencegah data tersimpan!
+                    raise ValidationError("The selling price cannot be lower than 90% of the expected price.")
     
 
     # Fungsi ini akan dijalankan ulang jika nilai living_area ATAU garden_area berubah.
@@ -132,3 +182,24 @@ class EstateProperty(models.Model):
                 'title': "Warning",
                 'message': "Data kebun telah dihapus karena checkbox dimatikan."
             }}
+
+    # Ini artinya fungsi ini boleh dipanggil dari UI/tombol oleh User.
+    def action_sold(self):
+        # Selalu lakukan looping karena Odoo bekerja memproses banyak record sekaligus (Recordset)
+        for record in self:
+            # Validasi bisnis: Rumah yang sudah dibatalkan tidak bisa dijual lagi
+            if record.state == 'canceled':
+                raise UserError("Canceled property cannot be sold.")
+            # Ubah status rumah menjadi terjual
+            record.state = 'sold'
+        # Fungsi publik XML-RPC Odoo harus selalu mereturn sesuatu (biasanya True jika berhasil)
+        return True
+
+    def action_cancel(self):
+        for record in self:
+            # Validasi bisnis: Rumah yang sudah terjual tidak bisa dibatalkan
+            if record.state == 'sold':
+                raise UserError("Sold property cannot be canceled.")
+            # Ubah status rumah menjadi batal
+            record.state = 'canceled'
+        return True
