@@ -6,6 +6,7 @@ class EstatePropertyOffer(models.Model):
     # Nama model ini akan menjadi tabel 'estate_property_offer'
     _name = "estate.property.offer"
     _description = "Real Estate Property Offer"
+    _order = "price desc"
 
     # Kolom untuk menyimpan nilai harga penawaran
     price = fields.Float(string="Price")
@@ -13,7 +14,10 @@ class EstatePropertyOffer(models.Model):
     # Kolom status penawaran, menggunakan dropdown pilihan statis
     # copy=False memastikan saat properti diduplikasi, status penawaran lama tidak ikut tersalin
     status = fields.Selection(
-        selection=[('accepted', 'Accepted'), ('refused', 'Refused')],
+        selection=[
+            ('accepted', 'Accepted'),
+            ('refused', 'Refused')
+        ],
         string="Status",
         copy=False
     )
@@ -34,6 +38,16 @@ class EstatePropertyOffer(models.Model):
     
     # RELASI: PENTING! Agar One2many di tabel utama berfungsi, tabel anak ini wajib memiliki Many2one ke tabel utama.
     property_id = fields.Many2one("estate.property", string="Property", required=True, ondelete='cascade')
+    property_type_id = fields.Many2one("estate.property.type", related="property_id.property_type_id", string="Property Type", store=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            property_id = self.env['estate.property'].browse(vals.get('property_id'))
+            if property_id and property_id.state == 'new':
+                # Update status properti menjadi 'Offer Received' jika tawaran masuk
+                property_id.state = 'offer_received'
+        return super().create(vals_list)
 
     # Fungsi Hitung Maju (Menghitung Tanggal Deadline dari Jumlah Hari)
     @api.depends("create_date", "validity")

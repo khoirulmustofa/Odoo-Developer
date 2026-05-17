@@ -10,6 +10,14 @@ class EstatePropertyType(models.Model):
     # Kolom nama tipe properti, wajib diisi
     name = fields.Char(string="Name", required=True)
 
+    sequence = fields.Integer()
+    offer_ids = fields.One2many('estate.property.offer', 'property_type_id')
+    offer_count = fields.Integer(compute="_compute_offer_count")
+
+    def _compute_offer_count(self):
+        for record in self:
+            record.offer_count = len(record.offer_ids)
+
 
     _sql_constraints = [
         # 2. Tuple berisi 3 elemen: ('nama_constraint_unik', 'SINTAKS_SQL', 'Pesan Error untuk User')
@@ -23,4 +31,4 @@ class EstatePropertyType(models.Model):
     # RELASI: Menghubungkan tipe properti dengan properti yang dimilikinya.
     # one2many memastikan satu tipe properti bisa dimiliki oleh banyak properti.
     # 'property_type_id' adalah nama field yang nanti akan dibuat di model estate.property (tabel anak).
-    # property_ids = fields.One2many("estate.property", "property_type_id", string="Properties")
+    property_ids = fields.One2many("estate.property", "property_type_id", string="Properties")

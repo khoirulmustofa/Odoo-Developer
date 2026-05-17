@@ -7,3 +7,5 @@ class EstatePropertyTag(models.Model):
 
     name = fields.Char(string="Name", required=True)
 
+    # 1. Kita wajib membuat field Integer khusus untuk menyimpan kode warna Odoo (0-11).
+    color = fields.Integer(string="Color Index")

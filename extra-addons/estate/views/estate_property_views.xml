@@ -58,10 +58,14 @@
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
             <!-- Tag <list> untuk merender tabel data pada Odoo 18 -->
-            <list string="Properties">
+           <list string="Properties" 
+                  decoration-success="state in ('offer_received', 'offer_accepted')" 
+                  decoration-bf="state == 'offer_accepted'"
+                  decoration-muted="state == 'sold'">
                 <field name="name" />
                 <field name="property_type_id" />
-                <field name="tag_ids" widget="many2many_tags" />
+                <field name="state" />
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
                 <field name="postcode" />
                 <field name="bedrooms" />
                 <field name="expected_price" />
@@ -84,12 +88,15 @@
         <field name="arch" type="xml">
             <form string="Property">
                 <header>
-                    <button name="action_sold" type="object" string="Sold" class="oe_highlight"/>
-                    <button name="action_cancel" type="object" string="Cancel"/>
-                    
-                    <field name="state" widget="statusbar" statusbar_visible="new,offer_received,offer_accepted,sold"/>
+                    <button name="action_sold" type="object" string="Sold"
+                        invisible="state != 'offer_accepted'" />
+
+                    <button name="action_cancel" type="object" string="Cancel"
+                        invisible="state != 'offer_accepted'" />
+
+                    <field name="state" widget="statusbar" />
                 </header>
-                
+
                 <!-- Pembungkus kertas putih utama -->
                 <sheet>
                     <group>
@@ -97,13 +104,14 @@
                         <h1>
                             <field name="name" placeholder="E.g. Cozy Condo in Downtown" />
                         </h1>
-                        <field name="tag_ids" widget="many2many_tags" />
+                        <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
                     </group>
                     <group>
                         <!-- Pembagian Tata Letak Menjadi 2 Kolom Sejajar -->
                         <group>
                             <!-- Kolom Kiri: Informasi Dasar & Lokasi -->
-                            <field name="property_type_id" />
+                            <field name="property_type_id"
+                                options="{'no_create': True}" />
                             <field name="postcode" />
                             <field name="date_availability" />
                         </group>
@@ -119,7 +127,7 @@
                     <notebook>
                         <!-- TAB 1: Deskripsi Properti -->
                         <page string="Description">
-                           <group>
+                            <group>
                                 <field name="description" />
                             </group>
                             <group>
@@ -128,14 +136,14 @@
                                 <field name="facades" />
                                 <field name="garage" />
                                 <field name="garden" />
-                                <field name="garden_area" />
-                                <field name="garden_orientation" />
+                                <field name="garden_area" invisible="not garden" />
+                                <field name="garden_orientation" invisible="not garden" />
                                 <field name="total_area" readonly="1" />
                             </group>
                         </page>
 
                         <page string="Offers">
-                           <field name="offer_ids">
+                            <field name="offer_ids" readonly="state in ['offer_accepted', 'sold', 'canceled']">
                             </field>
                         </page>
 

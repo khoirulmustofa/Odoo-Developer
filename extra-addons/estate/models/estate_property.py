@@ -107,6 +107,12 @@ class EstateProperty(models.Model):
     offer_ids = fields.One2many("estate.property.offer", "property_id", string="Offers")
 
 
+   # 1. Atribut ajaib _order menentukan pengurutan default tabel saat diload.
+    # 'id desc' berarti diurutkan berdasarkan ID secara 'descending' (menurun).
+    # Efeknya: Rumah yang baru saja diinput (ID terbesar) akan selalu muncul paling atas.
+    _order = "id desc"
+
+
     # Menambahkan validasi harga tidak boleh minus langsung di PostgreSQL
     _sql_constraints = [
         (
